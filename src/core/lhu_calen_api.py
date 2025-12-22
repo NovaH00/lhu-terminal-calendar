@@ -20,13 +20,18 @@ class LHUCalenAPI:
     def __init__(self, api_url: str, student_id: str, cache_ttl_hours: int = 24) -> None:
         self._api_url: str = api_url
         self._student_id: str = student_id
-        self._cache_manager = CacheManager(ttl_hours=cache_ttl_hours)
+        self._cache_manager: CacheManager = CacheManager(ttl_hours=cache_ttl_hours)
     
     def get_data(self, dt: datetime | None = None, day_range: int = 7) -> list[CalenItem]:
         if dt is None:
             dt = datetime.now(timezone.utc)
         elif dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
+
+        # Periodically clean expired cache entries (about 10% of the time)
+        import random
+        if random.random() < 0.1:  # 10% chance to clean expired cache files
+            self._cache_manager.clear_expired()
 
         # Check cache first
         cached_result = self._cache_manager.get(
@@ -81,9 +86,9 @@ class LHUCalenAPI:
 
         # Store the result in cache
         # Convert CalenItem objects to dictionaries for JSON serialization
-        cacheable_data = []
+        cacheable_data: list[dict[str, str]] = []
         for item in filtered_data:
-            item_dict = item.dict()
+            item_dict = item.model_dump()
             # Convert datetime objects to ISO format strings for JSON serialization
             item_dict['start_time'] = item.start_time.isoformat()
             item_dict['end_time'] = item.end_time.isoformat()

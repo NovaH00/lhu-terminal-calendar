@@ -1,8 +1,7 @@
 import json
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any
 from hashlib import md5
 
 
@@ -19,9 +18,9 @@ class CacheManager:
             cache_dir: Directory to store cache files
             ttl_hours: Time-to-live in hours for cached data
         """
-        self.cache_dir = Path(cache_dir)
+        self.cache_dir: Path = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
-        self.ttl = timedelta(hours=ttl_hours)
+        self.ttl: timedelta = timedelta(hours=ttl_hours)
     
     def _get_cache_key(self, api_url: str, student_id: str, query_time: datetime, day_range: int) -> str:
         """
@@ -38,7 +37,13 @@ class CacheManager:
         """
         return self.cache_dir / f"{cache_key}.json"
     
-    def get(self, api_url: str, student_id: str, query_time: datetime, day_range: int) -> Optional[list]:
+    def get(
+            self, 
+            api_url: str, 
+            student_id: str, 
+            query_time: datetime, 
+            day_range: int
+        ) -> list[dict[str, str]] | None:
         """
         Retrieve cached data if it exists and hasn't expired.
         
@@ -69,7 +74,14 @@ class CacheManager:
                 cache_file.unlink()
             return None
     
-    def set(self, api_url: str, student_id: str, query_time: datetime, day_range: int, data: list) -> None:
+    def set(
+            self, 
+            api_url: str, 
+            student_id: str, 
+            query_time: datetime, 
+            day_range: int, 
+            data: list[dict[str, str]]
+        ) -> None:
         """
         Store data in the cache.
         """
