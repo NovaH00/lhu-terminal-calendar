@@ -1,13 +1,16 @@
 import argparse
 from datetime import datetime
+from rich_argparse import RichHelpFormatter
 from src.ui.main_ui import MainUI
-from dotenv import load_dotenv
-load_dotenv()
 
 def main():
-    parser = argparse.ArgumentParser(description='LHU Calendar Viewer')
+    parser = argparse.ArgumentParser(
+        description='LHU Calendar Viewer',
+        formatter_class=RichHelpFormatter
+    )
+    parser.add_argument('student_id', type=str, help='Student ID')
+    parser.add_argument('-r', '--range', type=int, default=4, help='Day range to query (default: 4)')
     parser.add_argument('-t', '--time', type=str, help='Query time in YYYY-MM-DD format (default: today)')
-    parser.add_argument('-r', '--range', type=int, help='Day range to query (default: from environment variable)')
 
     args = parser.parse_args()
 
@@ -21,7 +24,7 @@ def main():
             return
 
     ui = MainUI()
-    ui.run(query_time=query_time, day_range=args.range)
+    ui.run(student_id=args.student_id, query_time=query_time, day_range=args.range)
 
 if __name__ == "__main__":
     main()

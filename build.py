@@ -41,14 +41,14 @@ def main():
     cmd = [
         sys.executable,
         '-m', 'nuitka',
-        '--standalone',
+        '--onefile',  # Create a single executable file instead of standalone directory
         f'--output-dir={output_dir}',
         '--output-filename=calen',  # Set the executable name
         '--include-package=src',
         '--include-package=rich',
         '--include-package=requests',
         '--include-package=pydantic',
-        '--include-data-files=.env=.,.env',  # Include .env file if needed
+        # '--include-data-files=.env=.env',  # Include .env file if needed (commented out since users need to modify it)
         '--remove-output',
     ]
 
