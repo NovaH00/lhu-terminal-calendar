@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, timedelta
+import random
 
 import requests
 from requests import Response
@@ -29,7 +30,6 @@ class LHUCalenAPI:
             dt = dt.replace(tzinfo=timezone.utc)
 
         # Periodically clean expired cache entries (about 10% of the time)
-        import random
         if random.random() < 0.1:  # 10% chance to clean expired cache files
             self._cache_manager.clear_expired()
 
@@ -43,14 +43,10 @@ class LHUCalenAPI:
 
         if cached_result is not None:
             # Convert cached data back to CalenItem objects
-            # Need to convert ISO format datetime strings back to datetime objects
-            reconstructed_items = []
-            for item_dict in cached_result:
-                # Convert ISO format strings back to datetime objects
-                item_dict['start_time'] = datetime.fromisoformat(item_dict['start_time'])
-                item_dict['end_time'] = datetime.fromisoformat(item_dict['end_time'])
-                reconstructed_items.append(CalenItem(**item_dict))
-            return reconstructed_items
+            return [
+                CalenItem.model_validate_json(item_dict)
+                for item_dict in cached_result
+            ]
 
         # Prepare payload and make API request
         payload = {
@@ -85,15 +81,11 @@ class LHUCalenAPI:
         ]
 
         # Store the result in cache
-        # Convert CalenItem objects to dictionaries for JSON serialization
-        cacheable_data: list[dict[str, str]] = []
-        for item in filtered_data:
-            item_dict = item.model_dump()
-            # Convert datetime objects to ISO format strings for JSON serialization
-            item_dict['start_time'] = item.start_time.isoformat()
-            item_dict['end_time'] = item.end_time.isoformat()
-            cacheable_data.append(item_dict)
-
+        cacheable_data = [
+            item.model_dump_json()
+            for item in filtered_data
+        ]
+        
         self._cache_manager.set(
             self._api_url,
             self._student_id,
