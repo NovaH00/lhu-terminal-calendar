@@ -3,32 +3,33 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 from hashlib import md5
+import platformdirs
 
 
 class CacheManager:
     """
     A simple file-based cache manager for storing API responses.
     """
-    
-    def __init__(self, cache_dir: str = ".cache", ttl_hours: int = 24):
+
+    def __init__(self, app_name: str = "lhu-calendar", ttl_hours: int = 24):
         """
         Initialize the cache manager.
-        
+
         Args:
-            cache_dir: Directory to store cache files
+            app_name: Name of the application for platform-specific cache directory
             ttl_hours: Time-to-live in hours for cached data
         """
-        self.cache_dir: Path = Path(cache_dir)
-        self.cache_dir.mkdir(exist_ok=True)
+        self.cache_dir: Path = Path(platformdirs.user_cache_dir(app_name))
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.ttl: timedelta = timedelta(hours=ttl_hours)
     
     def _get_cache_key(self, api_url: str, student_id: str, query_time: datetime, day_range: int) -> str:
         """
         Generate a unique cache key based on API parameters.
         """
-        # Convert datetime to ISO format string for consistent hashing
-        time_str = query_time.astimezone().isoformat() if query_time.tzinfo else query_time.isoformat()
-        key_str = f"{api_url}:{student_id}:{time_str}:{day_range}"
+        # Use only the date part (YYYY-MM-DD) for consistent caching throughout the day
+        date_str = query_time.date().isoformat()
+        key_str = f"{api_url}:{student_id}:{date_str}:{day_range}"
         return md5(key_str.encode()).hexdigest()
     
     def _get_cache_file_path(self, cache_key: str) -> Path:
