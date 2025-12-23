@@ -78,15 +78,14 @@ class CalendarDisplay:
         for date_key in dates_with_items:
             date_obj = datetime.combine(date_key, datetime.min.time())
 
-            # Mapping English day names to Vietnamese
             vietnamese_days = {
-                0: "Thứ Hai",  # Monday
-                1: "Thứ Ba",   # Tuesday
-                2: "Thứ Tư",   # Wednesday
-                3: "Thứ Năm",  # Thursday
-                4: "Thứ Sáu",  # Friday
-                5: "Thứ Bảy",  # Saturday
-                6: "Chủ Nhật"   # Sunday
+                0: "Thứ Hai", 
+                1: "Thứ Ba", 
+                2: "Thứ Tư",
+                3: "Thứ Năm", 
+                4: "Thứ Sáu", 
+                5: "Thứ Bảy",
+                6: "Chủ Nhật"
             }
 
             day_name = vietnamese_days[date_obj.weekday()]

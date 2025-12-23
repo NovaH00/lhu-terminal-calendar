@@ -1,7 +1,6 @@
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
 from hashlib import md5
 import platformdirs
 
