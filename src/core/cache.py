@@ -4,13 +4,12 @@ from pathlib import Path
 from hashlib import md5
 import platformdirs
 
-
 class CacheManager:
     """
     A simple file-based cache manager for storing API responses.
     """
 
-    def __init__(self, app_name: str = "lhu-calendar", ttl_hours: int = 24):
+    def __init__(self, app_name: str, ttl_hours: int = 24):
         """
         Initialize the cache manager.
 

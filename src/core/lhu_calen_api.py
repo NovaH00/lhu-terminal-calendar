@@ -4,8 +4,9 @@ import random
 import requests
 from requests import Response
 from pydantic import BaseModel
+from src.core.configurations import CacheConfigs
 from src.utils.datetime import parse_string_datetime
-from src.utils.cache import CacheManager
+from src.core.cache import CacheManager
 
 class CalenItem(BaseModel):
     start_time: datetime 
@@ -18,12 +19,14 @@ class FailedToFetch(Exception):
     pass
 
 class LHUCalenAPI:
-    def __init__(self, api_url: str, student_id: str, cache_ttl_hours: int = 24) -> None:
+    def __init__(self, api_url: str, student_id: str, cache_manager: CacheManager) -> None:
         self._api_url: str = api_url
         self._student_id: str = student_id
-        self._cache_manager: CacheManager = CacheManager(ttl_hours=cache_ttl_hours)
+        self._cache_manager: CacheManager = cache_manager 
     
-    def get_data(self, dt: datetime | None = None, day_range: int = 7) -> list[CalenItem]:
+    def get_data(self, day_range: int, dt: datetime | None = None) -> list[CalenItem]:
+        """Fetch data from the API, use current time if `dt` is not provided"""
+
         if dt is None:
             dt = datetime.now(timezone.utc)
         elif dt.tzinfo is None:
