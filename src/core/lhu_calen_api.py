@@ -15,7 +15,10 @@ class CalenItem(BaseModel):
     subject_name: str
     facility_name: str 
 
-class FailedToFetch(Exception):
+class ConnectionError(Exception):
+    pass
+
+class TimeoutError(Exception):
     pass
 
 class LHUCalenAPI:
@@ -25,7 +28,12 @@ class LHUCalenAPI:
         self._cache_manager: CacheManager = cache_manager 
     
     def get_data(self, day_range: int, dt: datetime | None = None) -> list[CalenItem]:
-        """Fetch data from the API, use current time if `dt` is not provided"""
+        """Fetch data from the API, use current time if `dt` is not provided
+        
+        Raises:
+            `ConnectionError` : When having network errors
+            `TimeoutError` : When the request have not responsed within 10s 
+        """
 
         if dt is None:
             dt = datetime.now(timezone.utc)
@@ -59,12 +67,14 @@ class LHUCalenAPI:
             "PageSize": 30
         }
 
-        res: Response = requests.post(self._api_url, payload)
-        if not res.ok:
-            raise FailedToFetch(
-                f"Status code: {res.status_code}, reason: {res.reason}"
-            )
-
+        try:
+            res: Response = requests.post(self._api_url, payload, timeout=10)
+            res.raise_for_status()
+        except requests.exceptions.ConnectionError:
+            raise ConnectionError()
+        except requests.exceptions.Timeout:
+            raise TimeoutError()
+         
         raw_data = res.json()["data"][2]
         parsed_data = [
             CalenItem(
