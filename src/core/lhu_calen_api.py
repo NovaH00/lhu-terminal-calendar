@@ -14,6 +14,7 @@ class CalenItem(BaseModel):
     room_name: str
     subject_name: str
     facility_name: str 
+    is_cancelled: bool 
 
 class ConnectionError(Exception):
     pass
@@ -22,10 +23,10 @@ class TimeoutError(Exception):
     pass
 
 class LHUCalenAPI:
-    def __init__(self, api_url: str, student_id: str, cache_manager: CacheManager) -> None:
+    def __init__(self, api_url: str, student_id: str, cache_manager: CacheManager | None = None) -> None:
         self._api_url: str = api_url
         self._student_id: str = student_id
-        self._cache_manager: CacheManager = cache_manager 
+        self._cache_manager: CacheManager | None  = cache_manager 
     
     def get_data(self, day_range: int, dt: datetime | None = None) -> list[CalenItem]:
         """Fetch data from the API, use current time if `dt` is not provided
@@ -41,23 +42,24 @@ class LHUCalenAPI:
             dt = dt.replace(tzinfo=timezone.utc)
 
         # Periodically clean expired cache entries (about 10% of the time)
-        if random.random() < 0.1:  # 10% chance to clean expired cache files
-            self._cache_manager.clear_expired()
+        if self._cache_manager is not None:
+            if random.random() < 0.1:  # 10% chance to clean expired cache files
+                self._cache_manager.clear_expired()
 
-        # Check cache first
-        cached_result = self._cache_manager.get(
-            self._api_url,
-            self._student_id,
-            dt,
-            day_range
-        )
+            # Check cache first
+            cached_result = self._cache_manager.get(
+                self._api_url,
+                self._student_id,
+                dt,
+                day_range
+            )
 
-        if cached_result is not None:
-            # Convert cached data back to CalenItem objects
-            return [
-                CalenItem.model_validate_json(item_dict)
-                for item_dict in cached_result
-            ]
+            if cached_result is not None:
+                # Convert cached data back to CalenItem objects
+                return [
+                    CalenItem.model_validate(item_dict)
+                    for item_dict in cached_result
+                ]
 
         # Prepare payload and make API request
         payload = {
@@ -78,11 +80,12 @@ class LHUCalenAPI:
         raw_data = res.json()["data"][2]
         parsed_data = [
             CalenItem(
-                start_time = parse_string_datetime(d["ThoiGianBD"]),
-                end_time = parse_string_datetime(d["ThoiGianKT"]),
-                room_name = d["TenPhong"],
-                subject_name =  d["TenMonHoc"],
-                facility_name =  d["TenCoSo"],
+                start_time    = parse_string_datetime(d["ThoiGianBD"]),
+                end_time      = parse_string_datetime(d["ThoiGianKT"]),
+                room_name     = d["TenPhong"],
+                subject_name  = d["TenMonHoc"],
+                facility_name = d["TenCoSo"],
+                is_cancelled  = d["TinhTrang"] == 1
             )
             for d in raw_data
         ]
@@ -93,18 +96,19 @@ class LHUCalenAPI:
             if item.end_time <= end_date and item.start_time >= dt
         ]
 
-        # Store the result in cache
-        cacheable_data = [
-            item.model_dump_json()
-            for item in filtered_data
-        ]
-        
-        self._cache_manager.set(
-            self._api_url,
-            self._student_id,
-            dt,
-            day_range,
-            cacheable_data
-        )
+        if self._cache_manager is not None:
+            # Store the result in cache
+            cacheable_data = [
+                item.model_dump(mode='json')
+                for item in filtered_data
+            ]
+            
+            self._cache_manager.set(
+                self._api_url,
+                self._student_id,
+                dt,
+                day_range,
+                cacheable_data
+            )
 
         return filtered_data

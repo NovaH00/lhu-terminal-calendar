@@ -39,10 +39,11 @@ def main():
 
     if args.command == 'cache':
         if args.action == "dir":
-            print(cache_manager.cache_dir)     
+            print(cache_manager.cache_dir)
         else:
-            print("TODO: Implement cache clean")
-        return 
+            removed = cache_manager.clear_all()
+            print(f"Đã xóa {removed} tệp cache")
+        return
     # Parse the time argument if provided
     day_range = args.range
     query_time = None

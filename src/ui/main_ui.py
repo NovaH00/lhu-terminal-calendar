@@ -18,7 +18,7 @@ class MainUI:
                 self._console.print(f"Không có lịch học trong {day_range} ngày tới", style="italic")
             else:
                 # Display the schedule in a horizontal format
-                self._calendar_display.display_schedule(calen_items, start_date=query_time)
+                self._calendar_display.display_schedule(calen_items, start_date=query_time, day_range=day_range)
 
         except lhu_calen_api.ConnectionError:
             self._console.print(f"[red]Không thể kết nối, hãy kiểm tra lại mạng[/red]")

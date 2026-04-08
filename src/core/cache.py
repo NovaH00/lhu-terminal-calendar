@@ -102,7 +102,7 @@ class CacheManager:
     def clear_expired(self) -> int:
         """
         Remove all expired cache files.
-        
+
         Returns:
             Number of files removed
         """
@@ -111,7 +111,7 @@ class CacheManager:
             try:
                 with open(cache_file, 'r', encoding='utf-8') as f:
                     cached_data = json.load(f)
-                
+
                 cache_time = datetime.fromisoformat(cached_data['timestamp'])
                 if datetime.now() - cache_time > self.ttl:
                     cache_file.unlink()
@@ -120,5 +120,22 @@ class CacheManager:
                 # If there's any issue reading the cache file, remove it
                 cache_file.unlink()
                 count += 1
-        
+
+        return count
+
+    def clear_all(self) -> int:
+        """
+        Remove all cache files.
+
+        Returns:
+            Number of files removed
+        """
+        count = 0
+        for cache_file in self.cache_dir.glob("*.json"):
+            try:
+                cache_file.unlink()
+                count += 1
+            except OSError:
+                pass
+
         return count

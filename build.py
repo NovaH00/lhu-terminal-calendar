@@ -58,7 +58,7 @@ def main():
     print(f"Command: {' '.join(cmd)}")
     
     try:
-        result = subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)
         print(f"Build completed successfully! Executable is in {output_dir}/")
         
         # List the output files
