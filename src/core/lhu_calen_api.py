@@ -85,7 +85,7 @@ class LHUCalenAPI:
                 room_name     = d["TenPhong"],
                 subject_name  = d["TenMonHoc"],
                 facility_name = d["TenCoSo"],
-                is_cancelled  = d["TinhTrang"] == 1
+                is_cancelled  = d["TinhTrang"] == 1 or d["TinhTrang"] == 6 # 1 là hủy, 6 là nghỉ lễ
             )
             for d in raw_data
         ]
